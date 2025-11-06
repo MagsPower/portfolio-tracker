@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Portfolio Tracker">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Gestisci i tuoi portfolio di investimenti con aggiornamento prezzi real-time">
+    
+    <title>Portfolio Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%232563eb' width='192' height='192'/><text x='96' y='120' font-size='100' font-weight='bold' fill='white' text-anchor='middle'>📈</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📈 Portfolio</h1>
+            <div class="header-buttons">
+                <button id="exportBtn" class="btn btn-icon" title="Esporta">📥</button>
+                <button id="importBtn" class="btn btn-icon" title="Importa">📤</button>
+                <input type="file" id="importFile" style="display:none" accept=".json">
+            </div>
+        </header>
+
+        <nav class="navbar">
+            <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+            <button class="nav-btn" data-view="portfolios">Portfolio</button>
+        </nav>
+
+        <main class="main">
+            <!-- Dashboard -->
+            <div id="dashboard-view" class="view active">
+                <h2>Dashboard</h2>
+                <div id="dashboard-content"></div>
+                <div class="dashboard-buttons">
+                    <button id="btn-create-portfolio" class="btn btn-success btn-full">+ Crea</button>
+                    <button id="btn-update-all-prices" class="btn btn-primary btn-full">🔄 Aggiorna</button>
+                </div>
+            </div>
+
+            <!-- Portfolios -->
+            <div id="portfolios-view" class="view">
+                <h2>Gestione</h2>
+                <div id="portfolios-content"></div>
+            </div>
+
+            <!-- Portfolio Detail -->
+            <div id="detail-view" class="view">
+                <div class="detail-header">
+                    <button id="btn-back" class="btn btn-icon-secondary">← </button>
+                    <div class="detail-title">
+                        <h2 id="portfolio-name"></h2>
+                        <span id="portfolio-total">€0,00</span>
+                    </div>
+                </div>
+
+                <!-- Performance Cards -->
+                <div id="portfolio-performance" class="performance-section"></div>
+
+                <div class="action-buttons">
+                    <button id="btn-update-prices" class="btn btn-primary btn-small">🔄 Aggiorna</button>
+                    <button id="btn-add-product" class="btn btn-success btn-small">+ Prodotto</button>
+                </div>
+                
+                <h3>Investimenti</h3>
+                <div class="table-wrapper">
+                    <table id="products-table" class="table">
+                        <thead>
+                            <tr>
+                                <th>Prodotto</th>
+                                <th>Prezzo</th>
+                                <th>Valore</th>
+                                <th>%</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-body"></tbody>
+                    </table>
+                </div>
+
+                <h3>Asset Class</h3>
+                <div class="breakdown-container-mobile">
+                    <div class="breakdown-chart-wrapper">
+                        <canvas id="breakdown-chart" width="160" height="160"></canvas>
+                    </div>
+                </div>
+
+                <div class="breakdown-legend-wrapper">
+                    <div id="breakdown-legend" class="breakdown-legend"></div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="breakdown-table" class="table">
+                        <thead>
+                            <tr>
+                                <th>Asset</th>
+                                <th>Valore</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="breakdown-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: Create Portfolio -->
+    <div id="modal-create-portfolio" class="modal">
+        <div class="modal-content">
+            <h3>Crea Portfolio</h3>
+            <input type="text" id="input-portfolio-name" placeholder="Nome" maxlength="100">
+            <div class="modal-buttons">
+                <button id="btn-confirm-create-portfolio" class="btn btn-success btn-full">Crea</button>
+                <button id="btn-cancel-create-portfolio" class="btn btn-secondary btn-full">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Product -->
+    <div id="modal-product" class="modal">
+        <div class="modal-content modal-product">
+            <h3 id="modal-product-title">Aggiungi Prodotto</h3>
+            
+            <div class="form-group">
+                <label>Tipo *</label>
+                <select id="product-type">
+                    <option value="ticker">Con Ticker</option>
+                    <option value="manual">Valore Manuale</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Nome *</label>
+                <input type="text" id="input-product-name" maxlength="100" placeholder="Nome">
+            </div>
+            
+            <div class="form-group">
+                <label>Asset Class *</label>
+                <select id="input-product-asset-class">
+                    <option value="">Seleziona...</option>
+                    <option value="Azionario">Azionario</option>
+                    <option value="Obbligazionario">Obbligazionario</option>
+                    <option value="Real Estate">Real Estate</option>
+                    <option value="Liquidità">Liquidità</option>
+                    <option value="ORO">ORO</option>
+                    <option value="BTC">BTC</option>
+                    <option value="Altro">Altro</option>
+                </select>
+            </div>
+
+            <!-- Campi Ticker -->
+            <div id="ticker-fields">
+                <div class="form-group">
+                    <label>Preset ISIN</label>
+                    <select id="input-preset-isin">
+                        <option value="">Seleziona...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Ticker *</label>
+                    <input type="text" id="input-product-ticker" maxlength="20" placeholder="Es: CSSPX.MI">
+                </div>
+                
+                <div class="form-group">
+                    <label>Quote *</label>
+                    <input type="number" id="input-product-shares" step="0.01" min="0" placeholder="100">
+                </div>
+            </div>
+
+            <!-- Campi Valore Manuale -->
+            <div id="manual-fields" style="display:none">
+                <div class="form-group">
+                    <label>Valore (€) *</label>
+                    <input type="number" id="input-manual-value" step="0.01" min="0" placeholder="5000.00">
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button id="btn-confirm-product" class="btn btn-success btn-full">Salva</button>
+                <button id="btn-cancel-product" class="btn btn-secondary btn-full">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading" style="display:none">
+        <div class="spinner"></div>
+        <p id="loading-text">Caricamento...</p>
+    </div>
+
+    <script>
+        // Registra il service worker per PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(reg => console.log('Service Worker registrato'))
+                .catch(err => console.log('Errore Service Worker:', err));
+        }
+
+        // Previeni zoom su doppio tap
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+
+    <script src="app.js"></script>
+</body>
+</html>
